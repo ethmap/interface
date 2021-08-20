@@ -2,9 +2,18 @@ import store from '../store'
 // import config from '../config'
 import BigNumber from 'bignumber.js'
 
+const Statuses = [
+  'base',
+  'wrap_pending',
+  'wrap_ready',
+  'wrapped'
+]
+
 class Zone {
   constructor (data) {
     this.id = data.id
+    this.status = Statuses[+(data.status.toString())]
+    this.pendingOwner = data.pendingOwner
     this.name = data.name
     this.code = data.code
     this.owner = data.owner
@@ -19,16 +28,43 @@ class Zone {
     return (this.owner === store.getters.currentAddress)
   }
 
+  isWrapped() {
+    return this.status === 'wrapped'
+  }
+
+  isWrappable() {
+    return this.canPrepare() || this.isPrepared() || this.isReady()
+  }
+
+  canPrepare() {
+    return this.isOwner() && !this.isWrapped() && (this.pendingOwner === '0x0000000000000000000000000000000000000000')
+  }
+
+  isPrepared() {
+    return this.status === 'wrap_pending' &&
+      this.pendingOwner === store.getters.currentAddress
+  }
+
+  isReady() {
+    return this.status === 'wrap_ready' &&
+      this.pendingOwner === store.getters.currentAddress &&
+      this.owner == store.getters.wrapper.options.address
+  }
+
+  openSeaLink() {
+    return `https://opensea.io/assets/0x7372d7fb769470ff57019404cbf6bc6515e39090/${this.id}`
+  }
+
   hasOwner () {
-    return (!this.owner.startsWith('0x0'))
+    return this.owner != '0x0000000000000000000000000000000000000000'
   }
 
   onSale () {
-    return (this.sellPrice !== '0' || this.owner.startsWith('0x0'))
+    return this.sellPrice !== '0'
   }
 
   isInitialSale () {
-    return (this.owner.startsWith('0x0'))
+    return !this.hasOwner()
   }
 
   getRequiredPrice () {
@@ -44,10 +80,12 @@ class Zone {
   zoneKeyFill () {
     if (this.isOwner()) {
       if (this.onSale()) return 'OWNER_SALE'
+      if (this.isPrepared() || this.isReady()) return 'PENDING_OWNER'
       return 'OWNER'
     }
-    if (!this.onSale()) return 'NOT_AVAILABLE'
-    return 'AVAILABLE'
+    if (this.onSale()) return 'AVAILABLE'
+    if (this.isWrapped()) return 'OPENSEA'
+    return 'NOT_AVAILABLE'
   }
 }
 

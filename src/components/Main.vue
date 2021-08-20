@@ -96,9 +96,11 @@ export default {
             let hoverInfo = ''
             switch (zone.zoneKeyFill()) {
               case 'AVAILABLE': hoverInfo = `<i class="fa fa-tag"></i> Price: ${price} Ξ`; break
-              case 'NOT_AVAILABLE': hoverInfo = `<i class="fa fa-times"></i> Not available`; break
+              case 'NOT_AVAILABLE': hoverInfo = `<i class="fa fa-times"></i> Not for sale`; break
               case 'OWNER_SALE': hoverInfo = `<i class="fa fa-money"></i> On sale for ${price} Ξ`; break
               case 'OWNER': hoverInfo = `<i class="fa fa-user"></i> You own this zone`; break
+              case 'PENDING_OWNER': hoverInfo = `<i class="fa fa-user"></i> You are wrapping this zone`; break
+              case 'OPENSEA': hoverInfo = `<i class="fa fa-user"></i> Listed on OpenSea`; break
             }
             return `<div class="hoverinfo"><b><span class="flag flag-${zone.code.toLowerCase()}"></span>
                                               ${geography.properties.name}</b><br />
@@ -110,7 +112,9 @@ export default {
           'AVAILABLE': '#A8DADC',
           'NOT_AVAILABLE': 'rgba(230, 57, 70, 0.5)',
           'OWNER': '#FCDE9C',
-          'OWNER_SALE': 'rgba(255, 136, 17, 0.5)'
+          'OWNER_SALE': 'rgba(255, 136, 17, 0.5)',
+          'PENDING_OWNER': 'rgba(3, 244, 252, 0.5)',
+          'OPENSEA': 'rgba(24, 104, 183, 0.5)'
         },
         data: colors,
         setProjection (element) {

@@ -79,3 +79,35 @@ export const zoneXfer = (zone, to) => {
     image: require(`@/assets/flags/${zone.code.toLowerCase()}.svg`)
   })
 }
+
+export const zonePrepared = (zone) => {
+  add({
+    color: 'green',
+    message: `<b>${zone.name}</b> prepared to wrap... !`,
+    image: require(`@/assets/flags/${zone.code.toLowerCase()}.svg`)
+  })
+}
+
+export const zonePrewrapped = (zone) => {
+  add({
+    color: 'green',
+    message: `<b>${zone.name}</b> transferred to NFT contract... !`,
+    image: require(`@/assets/flags/${zone.code.toLowerCase()}.svg`)
+  })
+}
+
+export const zoneWrapped = (zone) => {
+  add({
+    color: 'green',
+    message: `NFT claimed for <b>${zone.name}</b>... !`,
+    image: require(`@/assets/flags/${zone.code.toLowerCase()}.svg`)
+  })
+}
+
+export const zoneUnwrapped = (zone) => {
+  add({
+    color: 'green',
+    message: `NFT unwrapped for <b>${zone.name}</b>... !`,
+    image: require(`@/assets/flags/${zone.code.toLowerCase()}.svg`)
+  })
+}

@@ -30,15 +30,30 @@
           </div>
           <!-- Menu -->
           <div class="ui two item menu">
-            <a class="item" :class="{ 'active' : panel === 'sell' }"
+            <a v-if="!zone.isWrapped()" class="item" :class="{ 'active' : panel === 'sell' }"
                @click.prevent="switchPanel('sell')">
               <i class="fa fa-money"></i> Sell
+            </a>
+            <a v-if="zone.isWrapped()" class="item" :class="{ 'active' : panel === 'sell' }"
+               @click.prevent="switchPanel('unwrap')">
+              <i class="fa fa-money"></i> Unwrap
             </a>
             <a class="item" :class="{ 'active' : panel === 'xfer' }"
                @click.prevent="switchPanel('xfer')">
               <i class="fa fa-exchange"></i> Transfer
             </a>
           </div>
+          <!-- Unwrap panel -->
+          <form v-if="panel === 'unwrap'" class="ui form">
+            <!-- Unwrap actions -->
+            <div v-if="!txWait" class="ui segment basic center aligned">
+              <button class="ui green button"
+                      @click.prevent="confirmUnwrap()">
+                <i class="fa fa-check"></i>
+                Confirm
+              </button>
+            </div>
+          </form>
           <!-- Sell panel -->
           <form v-if="panel === 'sell'" class="ui form">
             <div class="field">
@@ -79,9 +94,78 @@
             </div>
           </form>
         </div>
+
+        <!-- Sell panel -->
+        <div v-if="zone.isWrappable()">
+          <div class="ui segment basic center aligned" style="margin-bottom: 0em;">
+              <h3 class="ui header">
+                <i class="fa fa-tag"></i> Wrap Zone
+              </h3>
+              <!-- Actions -->
+              <div v-if="!txWait && zone.canPrepare()" class="ui segment basic center aligned" style="margin-top: 0em;">
+                <div class="ui container" style="margin-bottom: 0.75em;">
+                  Step 1/3: Prepare <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> to wrap as an NFT.
+                </div>
+                <button class="ui green button" @click.prevent="confirmPrepare()">
+                  <i class="fa fa-check"></i>
+                  Confirm
+                </button>
+                <button class="ui basic button"
+                  @click.prevent="closeModal()">
+                  <i class="fa fa-times"></i>
+                  Cancel
+                </button>
+              </div>
+
+              <div v-if="!txWait && zone.isPrepared()" class="ui segment basic center aligned" style="margin-top: 0em;">
+                <div class="ui container" style="margin-bottom: 0.75em;">
+                  Step 2/3: Transfer <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> to NFT contract.
+                </div>
+                <button class="ui green button" @click.prevent="confirmWrapTransfer()">
+                  <i class="fa fa-check"></i>
+                  Confirm
+                </button>
+                <button class="ui basic button"
+                  @click.prevent="closeModal()">
+                  <i class="fa fa-times"></i>
+                  Cancel
+                </button>
+              </div>
+
+              <div v-if="!txWait && zone.isReady()" class="ui segment basic center aligned" style="margin-top: 0em;">
+                <div class="ui container" style="margin-bottom: 0.75em;">
+                  Step 3/3: Claim <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> NFT.
+                </div>
+                <button class="ui green button" @click.prevent="confirmWrapClaim()">
+                  <i class="fa fa-check"></i>
+                  Confirm
+                </button>
+                <button class="ui basic button"
+                  @click.prevent="closeModal()">
+                  <i class="fa fa-times"></i>
+                  Cancel
+                </button>
+              </div>
+          </div>
+        </div>
         <!-- Buy Form -->
+        <div class="ui segment basic center aligned" style="margin-bottom: 0em;" v-if="zone.isWrapped()">
+          <!-- <h2>OpenSea</h2> -->
+          <a :href="zone.openSeaLink()" title="View on OpenSea" target="_blank">
+            <img
+              style="width:220px; border-radius:5px; box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.25);"
+              src="https://storage.googleapis.com/opensea-static/Logomark/Badge%20-%20Available%20On%20-%20Light.png"
+              alt="Available on OpenSea"
+            />
+          </a>
+
+          <!-- <nft-card width="100%"  contractAddress="0x7372d7fb769470ff57019404cbf6bc6515e39090" :tokenId="zone.id"> </nft-card> -->
+          <!-- <a :href="zone.openSeaLink()" target="_blank">
+            <img style="width: 200px" src="/static/images/opensea.png" />
+          </a> -->
+        </div>
         <!-- -->
-        <div v-if="!zone.isOwner() && zone.onSale()">
+        <div v-if="!zone.isOwner() && zone.onSale() && !zone.isWrapped()">
           <!-- Details -->
           <div class="ui segment basic center aligned" style="margin-bottom: 0em;">
               <h3 class="ui header">
@@ -141,6 +225,9 @@ export default {
   computed: {
     contract () {
       return this.$store.getters.contract
+    },
+    wrapper () {
+      return this.$store.getters.wrapper
     },
     currentAddress () {
       return this.$store.getters.currentAddress
@@ -214,13 +301,108 @@ export default {
       if (!this.xferValid) return false
       this.txWait = true
       const zoneId = this.zone.id
-      return this.contract.methods.transferZone(zoneId, this.xferAddress)
+      let tx;
+      if (this.zone.isWrapped()) {
+        tx = this.wrapper.methods.transferFrom(this.currentAddress, this.xferAddress, zoneId)
+      } else {
+        tx = this.contract.methods.transferZone(zoneId, this.xferAddress)
+      }
+      return tx
         .send({ from: this.currentAddress })
         .then((res) => {
           let zone = Zone.getById(zoneId)
           zone.owner = this.xferAddress
           this.txWait = false
           notif.zoneXfer(zone, zone.owner)
+          this.closeModal()
+        })
+        .catch((err) => {
+          if (err) {
+            notif.transactionDenied(err.message)
+            notif.transactionPending(err.message)
+            this.txWait = false
+            console.log(err.message)
+          }
+        })
+    },
+    confirmPrepare() {
+      this.txWait = true
+      const zoneId = this.zone.id
+      return this.wrapper.methods.prepareToWrapZone(zoneId)
+        .send({ from: this.currentAddress })
+        .then(() => {
+          let zone = Zone.getById(zoneId)
+          zone.pendingOwner = this.currentAddress
+          zone.status = 'wrap_pending'
+          this.txWait = false
+          notif.zonePrepared(zone)
+          this.closeModal()
+        })
+        .catch((err) => {
+          if (err) {
+            notif.transactionDenied(err.message)
+            notif.transactionPending(err.message)
+            this.txWait = false
+            console.log(err.message)
+          }
+        })
+    },
+    confirmWrapTransfer() {
+      this.txWait = true
+      const zoneId = this.zone.id
+      return this.contract.methods.transferZone(zoneId, this.wrapper.options.address)
+        .send({ from: this.currentAddress })
+        .then(() => {
+          let zone = Zone.getById(zoneId)
+          zone.owner = this.wrapper.options.address
+          zone.status = 'wrap_ready'
+          this.txWait = false
+          notif.zonePrewrapped(zone)
+          this.closeModal()
+        })
+        .catch((err) => {
+          if (err) {
+            notif.transactionDenied(err.message)
+            notif.transactionPending(err.message)
+            this.txWait = false
+            console.log(err.message)
+          }
+        })
+    },
+    confirmWrapClaim() {
+      this.txWait = true
+      const zoneId = this.zone.id
+      return this.wrapper.methods.wrapZone(zoneId)
+        .send({ from: this.currentAddress })
+        .then(() => {
+          let zone = Zone.getById(zoneId)
+          zone.owner = this.currentAddress
+          zone.status = 'wrapped'
+          zone.pendingOwner = '0x0000000000000000000000000000000000000000'
+          this.txWait = false
+          notif.zoneWrapped(zone)
+          this.closeModal()
+        })
+        .catch((err) => {
+          if (err) {
+            notif.transactionDenied(err.message)
+            notif.transactionPending(err.message)
+            this.txWait = false
+            console.log(err.message)
+          }
+        })
+    },
+    confirmUnwrap() {
+      this.txWait = true
+      const zoneId = this.zone.id
+      return this.wrapper.methods.unwrapZone(zoneId)
+        .send({ from: this.currentAddress })
+        .then(() => {
+          let zone = Zone.getById(zoneId)
+          zone.owner = this.currentAddress
+          zone.status = 'base'
+          this.txWait = false
+          notif.zoneUnwrapped(zone)
           this.closeModal()
         })
         .catch((err) => {
