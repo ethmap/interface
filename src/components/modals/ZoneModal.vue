@@ -205,11 +205,6 @@
               alt="Available on OpenSea"
             />
           </a>
-
-          <!-- <nft-card width="100%"  contractAddress="0x7372d7fb769470ff57019404cbf6bc6515e39090" :tokenId="zone.id"> </nft-card> -->
-          <!-- <a :href="zone.openSeaLink()" target="_blank">
-            <img style="width: 200px" src="/static/images/opensea.png" />
-          </a> -->
         </div>
         <!-- -->
         <div v-if="!zone.isOwner() && zone.onSale() && !zone.isWrapped()">
