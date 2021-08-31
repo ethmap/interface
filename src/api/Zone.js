@@ -86,7 +86,7 @@ class Zone {
   }
 
   openSeaLink() {
-    return `https://opensea.io/assets/0x7372d7fb769470ff57019404cbf6bc6515e39090/${this.id}`
+    return `https://opensea.io/assets/0xD509B296183F45D50d49499E7Bf6BF0b1A2bA6d0/${this.id}`
   }
 
   hasOwner () {
