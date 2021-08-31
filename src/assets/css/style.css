@@ -8,6 +8,22 @@
   flex: 1 !important;
 } */
 
+/*           'AVAILABLE': '#A8DADC',
+          'NOT_AVAILABLE': 'url(#pattern)',
+          'OWNER': '#FCDE9C',
+          'OWNER_WRAPPED': '#FCDE9C',
+          'OWNER_SALE': 'rgba(255, 136, 17, 0.5)',
+          'PENDING_OWNER': 'rgba(3, 244, 252, 0.5)',
+          'OPENSEA': 'rgba(24, 104, 183, 0.5)',
+          'MIGRATE': 'rgba(233, 145, 255, 0.5)',
+          'OWNER_MIGRATE': 'rgba(220, 82, 255, 0.5)' */
+
+#owner_migrate_needed rect { fill: #FCDE9C;   }
+#owner_migrate_needed path { stroke: #e991ff; }
+
+#owner_wrap_needed rect { fill: #FCDE9C;   }
+#owner_wrap_needed path { stroke: #1868b7; }
+
 body {
   background-color: rgba(218, 218, 218, 0.50) !important;
 }
