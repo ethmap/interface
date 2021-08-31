@@ -30,9 +30,7 @@
             <span v-if="zone.onSale()"><br />Listed on sale for {{ zone.sellPrice }} Ξ</span></p>
           </div>
           <!-- Menu -->
-          <div :class="`ui ${
-            zone.needsMigration() ? 'three' : 'two'
-          } item menu`">
+          <div :class="`ui two item menu`">
             <a v-if="!zone.isWrapped()" class="item" :class="{ 'active' : panel === 'sell' }"
                @click.prevent="switchPanel('sell')">
               <i class="fa fa-money"></i> Sell
