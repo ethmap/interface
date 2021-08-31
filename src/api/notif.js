@@ -111,3 +111,19 @@ export const zoneUnwrapped = (zone) => {
     image: require(`@/assets/flags/${zone.code.toLowerCase()}.svg`)
   })
 }
+
+export const zoneApproved = (zone) => {
+  add({
+    color: 'green',
+    message: `<b>${zone.name}</b> prepared to migrate... !`,
+    image: require(`@/assets/flags/${zone.code.toLowerCase()}.svg`)
+  })
+}
+
+export const zoneMigrated = (zone) => {
+  add({
+    color: 'green',
+    message: `<b>${zone.name}</b> migrated... !`,
+    image: require(`@/assets/flags/${zone.code.toLowerCase()}.svg`)
+  })
+}
