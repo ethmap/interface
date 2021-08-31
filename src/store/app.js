@@ -1,6 +1,7 @@
 const state = {
   contract: null,
   wrapper: null,
+  oldWrapper: null,
   lens: null,
   currentAddress: null,
   mapLoaded: false,
@@ -13,6 +14,7 @@ const getters = {
   app: state => state,
   contract: state => state.contract,
   wrapper: state => state.wrapper,
+  oldWrapper: state => state.oldWrapper,
   lens: state => state.lens,
   currentAddress: state => state.currentAddress,
   mapLoaded: state => state.mapLoaded,
@@ -47,6 +49,7 @@ const mutations = {
   setContracts (state, contracts) {
     state.contract = contracts.map
     state.wrapper = contracts.wrapper
+    state.oldWrapper = contracts.oldWrapper
     state.lens = contracts.lens
   },
   setCurrentAddress (state, currentAddress) {

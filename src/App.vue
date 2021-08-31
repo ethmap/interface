@@ -36,6 +36,7 @@ const networkConfig = {
     networkId: 1,
     contractAddress: config.contractAddressLive,
     wrapperAddress: config.wrapperAddressLive,
+    oldWrapperAddress: config.oldWrapperAddressLive,
     lensAddress: config.lensAddressLive,
     fallback: `https://mainnet.infura.io/${config.infuraAPIKey}`
   },
@@ -83,11 +84,13 @@ export default {
     getContracts () {
       const MapContract = new window.web3.eth.Contract(MapABI, networkConfig[this.network].contractAddress)
       const ZoneContract = new window.web3.eth.Contract(ZonesABI, networkConfig[this.network].wrapperAddress)
+      const OldZoneContract = new window.web3.eth.Contract(ZonesABI, networkConfig[this.network].oldWrapperAddress)
       const LensContract = new window.web3.eth.Contract(LensABI, networkConfig[this.network].lensAddress)
       return {
         map: Object.freeze(MapContract),
         wrapper: Object.freeze(ZoneContract),
-        lens: Object.freeze(LensContract)
+        lens: Object.freeze(LensContract),
+        oldWrapper: Object.freeze(OldZoneContract)
       }
     },
     getWrapper () {
