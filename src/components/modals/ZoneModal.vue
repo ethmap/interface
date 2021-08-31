@@ -13,7 +13,8 @@
           <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> {{ zone.name }}
           <div v-if="zone.hasOwner()" class="ui sub header"
                data-tooltip="Current owner" data-inverted="" data-position="bottom center">
-            <i class="fa fa-user"></i> {{ zone.owner }}
+            <span>#{{ zone.id }}</span>
+            <i style="padding-left: 10px;" class="fa fa-user"></i> <a :href="`https://etherscan.io/address/${zone.owner}`" target="_blank"> {{ zone.owner }}</a>
           </div>
         </h2>
         <!-- Zone not on sale -->
@@ -29,7 +30,9 @@
             <span v-if="zone.onSale()"><br />Listed on sale for {{ zone.sellPrice }} Ξ</span></p>
           </div>
           <!-- Menu -->
-          <div class="ui two item menu">
+          <div :class="`ui ${
+            zone.needsMigration() ? 'three' : 'two'
+          } item menu`">
             <a v-if="!zone.isWrapped()" class="item" :class="{ 'active' : panel === 'sell' }"
                @click.prevent="switchPanel('sell')">
               <i class="fa fa-money"></i> Sell
@@ -95,57 +98,101 @@
           </form>
         </div>
 
-        <!-- Sell panel -->
+        <!-- Migrate panel -->
+        <div v-if="zone.isMigratable()">
+          <div class="ui segment basic center aligned" style="margin-bottom: 0em;">
+            <h3 class="ui header">
+              <i class="fa fa-tag"></i> Migrate Zone
+            </h3>
+            <p>You own this zone, but it must be migrated to be fully compatible with OpenSea.</p>
+            <!-- Step 1 Actions -->
+            <div v-if="!txWait && zone.canApproveMigrate()" class="ui segment basic center aligned" style="margin-top: 0em;">
+              <div class="ui container" style="margin-bottom: 0.75em;">
+                Step 1/2: Approve migration of <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> NFT.
+              </div>
+              <button class="ui green button" @click.prevent="confirmApproveMigrate()">
+                <i class="fa fa-check"></i>
+                Confirm
+              </button>
+              <button class="ui basic button"
+                @click.prevent="closeModal()">
+                <i class="fa fa-times"></i>
+                Cancel
+              </button>
+            </div>
+
+            <!-- Step 2 Actions -->
+            <div v-if="!txWait && zone.migrateReady()" class="ui segment basic center aligned" style="margin-top: 0em;">
+              <div class="ui container" style="margin-bottom: 0.75em;">
+                Step 2/2: Migrate <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> to new wrapper.
+              </div>
+              <button class="ui green button" @click.prevent="confirmMigrate()">
+                <i class="fa fa-check"></i>
+                Confirm
+              </button>
+              <button class="ui basic button"
+                @click.prevent="closeModal()">
+                <i class="fa fa-times"></i>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wrap panel -->
         <div v-if="zone.isWrappable()">
           <div class="ui segment basic center aligned" style="margin-bottom: 0em;">
-              <h3 class="ui header">
-                <i class="fa fa-tag"></i> Wrap Zone
-              </h3>
-              <!-- Actions -->
-              <div v-if="!txWait && zone.canPrepare()" class="ui segment basic center aligned" style="margin-top: 0em;">
-                <div class="ui container" style="margin-bottom: 0.75em;">
-                  Step 1/3: Prepare <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> to wrap as an NFT.
-                </div>
-                <button class="ui green button" @click.prevent="confirmPrepare()">
-                  <i class="fa fa-check"></i>
-                  Confirm
-                </button>
-                <button class="ui basic button"
-                  @click.prevent="closeModal()">
-                  <i class="fa fa-times"></i>
-                  Cancel
-                </button>
+            <h3 class="ui header">
+              <i class="fa fa-tag"></i> Wrap Zone
+            </h3>
+            <p>You own this zone, but it must be wrapped to be compatible with OpenSea.</p>
+            <!-- Step 1 Actions -->
+            <div v-if="!txWait && zone.canPrepare()" class="ui segment basic center aligned" style="margin-top: 0em;">
+              <div class="ui container" style="margin-bottom: 0.75em;">
+                Step 1/3: Prepare <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> to wrap as an NFT.
               </div>
+              <button class="ui green button" @click.prevent="confirmPrepare()">
+                <i class="fa fa-check"></i>
+                Confirm
+              </button>
+              <button class="ui basic button"
+                @click.prevent="closeModal()">
+                <i class="fa fa-times"></i>
+                Cancel
+              </button>
+            </div>
 
-              <div v-if="!txWait && zone.isPrepared()" class="ui segment basic center aligned" style="margin-top: 0em;">
-                <div class="ui container" style="margin-bottom: 0.75em;">
-                  Step 2/3: Transfer <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> to NFT contract.
-                </div>
-                <button class="ui green button" @click.prevent="confirmWrapTransfer()">
-                  <i class="fa fa-check"></i>
-                  Confirm
-                </button>
-                <button class="ui basic button"
-                  @click.prevent="closeModal()">
-                  <i class="fa fa-times"></i>
-                  Cancel
-                </button>
+            <!-- Step 2 Actions -->
+            <div v-if="!txWait && zone.isPrepared()" class="ui segment basic center aligned" style="margin-top: 0em;">
+              <div class="ui container" style="margin-bottom: 0.75em;">
+                Step 2/3: Transfer <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> to NFT contract.
               </div>
+              <button class="ui green button" @click.prevent="confirmWrapTransfer()">
+                <i class="fa fa-check"></i>
+                Confirm
+              </button>
+              <button class="ui basic button"
+                @click.prevent="closeModal()">
+                <i class="fa fa-times"></i>
+                Cancel
+              </button>
+            </div>
 
-              <div v-if="!txWait && zone.isReady()" class="ui segment basic center aligned" style="margin-top: 0em;">
-                <div class="ui container" style="margin-bottom: 0.75em;">
-                  Step 3/3: Claim <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> NFT.
-                </div>
-                <button class="ui green button" @click.prevent="confirmWrapClaim()">
-                  <i class="fa fa-check"></i>
-                  Confirm
-                </button>
-                <button class="ui basic button"
-                  @click.prevent="closeModal()">
-                  <i class="fa fa-times"></i>
-                  Cancel
-                </button>
+            <!-- Step 3 Actions -->
+            <div v-if="!txWait && zone.isReady()" class="ui segment basic center aligned" style="margin-top: 0em;">
+              <div class="ui container" style="margin-bottom: 0.75em;">
+                Step 3/3: Claim <span :class="`flag flag-${zone.code.toLowerCase()}`"></span> NFT.
               </div>
+              <button class="ui green button" @click.prevent="confirmWrapClaim()">
+                <i class="fa fa-check"></i>
+                Confirm
+              </button>
+              <button class="ui basic button"
+                @click.prevent="closeModal()">
+                <i class="fa fa-times"></i>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
         <!-- Buy Form -->
@@ -229,6 +276,9 @@ export default {
     wrapper () {
       return this.$store.getters.wrapper
     },
+    oldWrapper () {
+      return this.$store.getters.oldWrapper
+    },
     currentAddress () {
       return this.$store.getters.currentAddress
     },
@@ -261,6 +311,48 @@ export default {
           zone.owner = this.currentAddress
           this.txWait = false
           notif.zoneBought(zone)
+          this.closeModal()
+        })
+        .catch((err) => {
+          if (err) {
+            notif.transactionDenied(err.message)
+            notif.transactionPending(err.message)
+            this.txWait = false
+            console.log(err.message)
+          }
+        })
+    },
+    confirmApproveMigrate() {
+      this.txWait = true
+      const zoneId = this.zone.id
+      return this.oldWrapper.methods.approve(this.wrapper.options.address, zoneId)
+        .send({ from: this.currentAddress })
+        .then(() => {
+          let zone = Zone.getById(zoneId)
+          zone.status = 'migrate_ready'
+          this.txWait = false
+          notif.zoneApproved(zone)
+          this.closeModal()
+        })
+        .catch((err) => {
+          if (err) {
+            notif.transactionDenied(err.message)
+            notif.transactionPending(err.message)
+            this.txWait = false
+            console.log(err.message)
+          }
+        })
+    },
+    confirmMigrate() {
+      this.txWait = true
+      const zoneId = this.zone.id
+      return this.wrapper.methods.migrate(zoneId)
+        .send({ from: this.currentAddress })
+        .then(() => {
+          let zone = Zone.getById(zoneId)
+          zone.status = 'wrapped'
+          this.txWait = false
+          notif.zoneMigrated(zone)
           this.closeModal()
         })
         .catch((err) => {
