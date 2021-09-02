@@ -18,6 +18,8 @@
           'MIGRATE': 'rgba(233, 145, 255, 0.5)',
           'OWNER_MIGRATE': 'rgba(220, 82, 255, 0.5)' */
 
+#patterns { display: none; }
+
 #owner_migrate_needed rect { fill: #FCDE9C;   }
 #owner_migrate_needed path { stroke: #e991ff; }
 
